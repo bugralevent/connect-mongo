@@ -223,7 +223,7 @@ module.exports = function connectMongo(connect) {
             let s;
 
             try {
-                s = { _id: this.computeStorageId(sid), session: this.transformFunctions.serialize(session) };
+                s = { siteName: siteName, _id: this.computeStorageId(sid), session: this.transformFunctions.serialize(session) };
             } catch (err) {
                 return callback(err);
             }
