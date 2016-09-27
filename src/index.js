@@ -190,10 +190,11 @@ module.exports = function connectMongo(connect) {
 
         /* Public API */
 
-        get(sid, callback) {
+        get(siteName, sid, callback) {
             return this.collectionReady()
                 .then(collection => collection.findOneAsync({
                     _id: this.computeStorageId(sid),
+                    siteName: siteName,
                     $or: [
                         { expires: { $exists: false } },
                         { expires: { $gt: new Date() } },
@@ -212,7 +213,7 @@ module.exports = function connectMongo(connect) {
                 .asCallback(callback);
         }
 
-        set(sid, session, callback) {
+        set(siteName,sid, session, callback) {
 
             // removing the lastModified prop from the session object before update
             if (this.options.touchAfter > 0 && session && session.lastModified) {
@@ -245,7 +246,7 @@ module.exports = function connectMongo(connect) {
             }
 
             return this.collectionReady()
-                .then(collection => collection.updateAsync({ _id: this.computeStorageId(sid) }, s, { upsert: true }))
+                .then(collection => collection.updateAsync({ _id: this.computeStorageId(sid), siteName: siteName }, s, { upsert: true }))
                 .then(responseArray => {
                     const rawResponse = responseArray.length === 2 ? responseArray[1] : responseArray[0].result;
                     if (rawResponse.upserted) {
@@ -258,7 +259,7 @@ module.exports = function connectMongo(connect) {
                 .asCallback(callback);
         }
 
-        touch(sid, session, callback) {
+        touch(siteName, sid, session, callback) {
             const updateFields = {},
                 touchAfter = this.options.touchAfter * 1000,
                 lastModified = session.lastModified ? session.lastModified.getTime() : 0,
@@ -286,7 +287,7 @@ module.exports = function connectMongo(connect) {
             }
 
             return this.collectionReady()
-                .then(collection => collection.updateAsync({ _id: this.computeStorageId(sid) }, { $set: updateFields }))
+                .then(collection => collection.updateAsync({ _id: this.computeStorageId(sid), siteName: siteName }, { $set: updateFields }))
                 .then(result => {
                     if (result.nModified === 0) {
                         throw new Error('Unable to find the session to touch');
@@ -297,9 +298,9 @@ module.exports = function connectMongo(connect) {
                 .asCallback(callback);
         }
 
-        destroy(sid, callback) {
+        destroy(siteName, sid, callback) {
             return this.collectionReady()
-                .then(collection => collection.removeAsync({ _id: this.computeStorageId(sid) }))
+                .then(collection => collection.removeAsync({ _id: this.computeStorageId(sid), siteName: siteName }))
                 .then(() => this.emit('destroy', sid))
                 .asCallback(callback);
         }
